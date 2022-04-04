@@ -8,37 +8,83 @@ var connection = mysql.createConnection({
     password: "toor", 
     database: "fypdb",
 });
-
 const app = express(); 
-
 app.use(express.json()); 
 app.use(express.urlencoded({extended: false})); 
 app.use(cors()); 
 
 
-app.get("/api/user_task_data", (req, res)=> { //GET
-    // here i need to fetch and decode what data i need before sending it. 
+
+
+
+// YOU NEED TO DO THE SQL GRAEME TABLE table 
+
+
+app.get("/api/user_task_data", (req, res)=> {
+    //Fethching the data from the database. 
+    //console.log("Fetching proejct called");
     connection.connect(); 
-    connection.query("SELECT taskbox.taskId, projects.projectName, taskbox.taskDetail, taskbox.taskDue, taskbox.taskPriority, taskbox.taskStatus, users.username, taskbox.taskTags\
+    connection.query("SELECT taskbox.taskId, projects.projectName, taskbox.taskDetail, taskbox.taskDue, taskbox.taskPriority, taskbox.taskStatus, users.username, taskbox.taskTags, taskbox.published\
     FROM taskbox \
     INNER JOIN projects ON taskbox.projectId=projects.id\
     INNER JOIN users ON taskbox.allocatedTo=users.userId", function(err, rows, fields){ 
-        if (err) console.log(err);
+        if (err) { 
+            console.log(err) ;
+        }
         res.json(rows); 
     })
 })
 
 
 
+app.get("/api/user_project_data", (req, res)=> {
+    //Fethching the data from the database. 
+    console.log("Fetching proejct called");
+    connection.connect(); 
+    connection.query("SELECT * FROM projects",
+     function(err, rows, fields){ 
+        if (err) { 
+            console.log(err) ;
+        }
+        res.json(rows); 
+    })
+})
+
 //let post = {taskId: null, projectId: "(select id from projects where projectName='"+userData.projectName+"')", taskDetail : userData.taskDetail, taskDue: userData.taskDue, taskPriority: 1, taskStatus: 0, allocatedTo:1, taskTags: userData.taskTags}; 
 
 
 app.post("/add-task", (req, res)=>{ //DELETE
     const userData = req.body; 
+    var tStatus =0; 
+    var published=1; 
+    userData.tstatus=="Finished" ? tStatus=1 : tStatus=0; 
+    userData.tPublished=="Publish" ? published=1 : published=0; 
+    
+
+    // Check the data for falutly. 
+    console.log(userData);
+    //let post = {taskId: null, projectId: ("select projectName from projects where projects.Id=1"), taskDetail : userData.taskDetail, taskDue: userData.taskDue, taskPriority: 1, taskStatus: 0, allocatedTo:1, taskTags: userData.taskTags}; 
+
+    let sql = 'INSERT INTO taskbox values (null, (SELECT id FROM projects where projectName="'+userData.projectName+'"),"' + userData.taskDetail +'","'+ userData.tduedate+ '" ,"'+ userData.tpriority+ '","'+ tStatus+ '",'+ '(SELECT userId from users where users.username="'+ userData.allocatedTo+'")'+ ',"'+ userData.taskTag+'","'+ published+'")';
+    connection.connect(); 
+
+    let query = connection.query(sql, (err, result)=>{ 
+        if(err) throw err 
+        console.log(result); 
+
+    })
+
+    res.redirect("/task/todo"); 
+})
+
+app.post("/add-projects", (req, res)=>{ //DELETE
+    console.log(req.body);
+    const userData = req.body; 
     // Check the data for falutly. 
     console.log(userData.projectName);
-    let post = {taskId: null, projectId: 1, taskDetail : userData.taskDetail, taskDue: userData.taskDue, taskPriority: 1, taskStatus: 0, allocatedTo:1, taskTags: userData.taskTags}; 
-    let sql = "INSERT INTO taskbox SET ?";
+
+    let post = {id: null, projectName: userData.pname, projectLeader : userData.pleader, projectDetail: userData.pdetail, pstartDate: userData.pstartDate, pendDate: userData.pEndDate, projectBudget:userData.pbudget, teamMembers: userData.teammembers, projectType: userData.ptype}; 
+    let sql = "INSERT INTO projects SET ?";
     connection.connect(); 
 
     let query = connection.query(sql, post, (err, result)=>{ 
@@ -47,9 +93,8 @@ app.post("/add-task", (req, res)=>{ //DELETE
 
     })
 
-    res.redirect("/task/todo");
+    res.redirect("/home");
 })
-
 
 
 app.post("/deletetasks", (req, res)=>{ 
@@ -79,6 +124,10 @@ app.post("/deletetasks", (req, res)=>{
 
 
 
+
+
+
+
  
 
 
@@ -86,8 +135,8 @@ app.post("/deletetasks", (req, res)=>{
 
 
 //Delete task by ID. 
-app.delete("/api/deletetask/:id", (req, res)=>{ 
-    let sqlQuery = "delete from taskbox where taskId="+req.params.id;   
+app.delete("/api/deletetask/:taskId", (req, res)=>{ 
+    let sqlQuery = "delete from taskbox where taskId="+req.params.taskId;   
     let post = {taskId : req.body.UniqueKey}
     connection.connect(); 
     let query=connection.query(sqlQuery, post, (err, result)=>{ 
@@ -97,14 +146,61 @@ app.delete("/api/deletetask/:id", (req, res)=>{
             res.send("1S")
         }
     })
-    //res.redirect("/task/todo");
-
-    
-
-    
-
 }); 
 
+
+//Delete project by ID. 
+app.delete("/api/deleteproject/:projectId", (req, res)=>{ 
+    let sqlQuery = "delete from projects where id="+req.params.projectId;   
+    let post = {id : req.body.uniquePId}
+    connection.connect(); 
+    let query=connection.query(sqlQuery, post, (err, result)=>{ 
+        if(err){ 
+            throw err
+        }else { 
+            res.send("1S")
+        }
+    })
+}); 
+
+
+app.put("/api/updatestatus/:taskId/:taskStatus", (req, res)=>{ 
+    let sqlQuery; 
+    if(req.params.taskStatus=="true"){ 
+        sqlQuery = "update taskbox set taskstatus = 0 where taskId="+req.params.taskId; 
+    }else { 
+        sqlQuery = "update taskbox set taskstatus = 1 where taskId="+req.params.taskId; 
+    }
+    let post = {taskId : req.body.UniqueKey} 
+    connection.connect(); 
+    let query = connection.query(sqlQuery, post, (err, result) => { 
+        if(err){ 
+            throw err
+        } else{ 
+            res.send("Updated")
+        }
+    })
+}); 
+
+
+app.post("/api/update-publish/:taskId/:typeHideShow", (req, res) => { 
+    let sqlQuery=""; 
+    if(req.params.typeHideShow=="Hide"){ 
+        sqlQuery = "update taskbox set published = 0 where taskId="+req.params.taskId; 
+    }else if(req.params.typeHideShow=="Show"){ 
+        sqlQuery = "update taskbox set published = 1 where taskId="+req.params.taskId; 
+    }
+    let post = {id : req.body.uniquePId}
+    connection.connect(); 
+    let query=connection.query(sqlQuery, post, (err, result)=>{ 
+        if(err){ 
+            throw err
+        }else { 
+            res.send("Updated")
+        }
+    })
+
+}); 
 
 
 
