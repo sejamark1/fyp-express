@@ -16,7 +16,6 @@ app.use(cors());
 
 
 
-
 // YOU NEED TO DO THE SQL GRAEME TABLE table 
 
 
@@ -37,9 +36,36 @@ app.get("/api/user_task_data", (req, res)=> {
 
 
 
+// Edit task detail change and fetcher. 
+var editId = 0; 
+app.post("/api/update_editId/:taskId", (req,res) =>{ 
+    console.log("New id for edit is set: " + req.params.taskId);
+    editId = req.params.taskId; 
+})
+
+
+app.get("/api/edit-task-data/", (req, res)=> {
+    console.log("Fetching task data based on taskid " + editId);
+    let sqlQuery = "SELECT taskbox.taskId, projects.projectName, taskbox.taskDetail, taskbox.taskDue, taskbox.taskPriority, taskbox.taskStatus, users.username, taskbox.taskTags, taskbox.published\
+    FROM taskbox \
+    INNER JOIN projects ON taskbox.projectId=projects.id\
+    INNER JOIN users ON taskbox.allocatedTo=users.userId where taskId = " + editId; 
+
+    connection.connect(); 
+    connection.query(sqlQuery, function(err, rows, fields){ 
+        if (err) { 
+            console.log(err) ;
+        }
+        res.json(rows); 
+    })
+})
+
+app.post("/update-task-details", (req, res) =>{ 
+    console.log(req.body); 
+}); 
+
 app.get("/api/user_project_data", (req, res)=> {
     //Fethching the data from the database. 
-    console.log("Fetching proejct called");
     connection.connect(); 
     connection.query("SELECT * FROM projects",
      function(err, rows, fields){ 
@@ -180,7 +206,9 @@ app.put("/api/updatestatus/:taskId/:taskStatus", (req, res)=>{
             res.send("Updated")
         }
     })
-}); 
+});
+
+
 
 
 app.post("/api/update-publish/:taskId/:typeHideShow", (req, res) => { 
