@@ -61,13 +61,46 @@ app.get("/api/edit-task-data/", (req, res)=> {
 })
 
 app.post("/update-task-details", (req, res) =>{ 
-    console.log(req.body); 
+    let userData = req.body;  
+    let taskStatus = userData.tstatus === "Finished" ? 1 : 0; 
+    let taskPublished = userData.tPublished === "Publish" ? 1 : 0; 
+
+    let sqlQuery = `UPDATE taskbox \
+    SET projectId = (SELECT id FROM projects where projectName="`+userData.projectName+`"), taskdetail = "`+userData.taskDetail+`", taskDue = "`+userData.tduedate+`", taskPriority = "`+userData.tpriority+`", taskStatus = "`+taskStatus+`", \
+    allocatedTo = (SELECT userId from users where users.username="`+userData.allocatedTo+`"), taskTags = "`+userData.taskTag+`", published = "`+taskPublished+`"\
+    WHERE taskId = `+userData.tId 
+    
+    connection.connect(); 
+    connection.query(sqlQuery, function(err, rows, fields){ 
+        if(err){ 
+            console.log(err); 
+        }
+        res.redirect("/task/todo"); 
+    })
+    
+
+
 }); 
+
+
+
 
 app.get("/api/user_project_data", (req, res)=> {
     //Fethching the data from the database. 
     connection.connect(); 
     connection.query("SELECT * FROM projects",
+     function(err, rows, fields){ 
+        if (err) { 
+            console.log(err) ;
+        }
+        res.json(rows); 
+    })
+})
+
+
+app.get("/api/get-users-data", (req, res)=> { 
+    connection.connect(); 
+    connection.query("SELECT * FROM users",
      function(err, rows, fields){ 
         if (err) { 
             console.log(err) ;
@@ -123,29 +156,29 @@ app.post("/add-projects", (req, res)=>{ //DELETE
 })
 
 
-app.post("/deletetasks", (req, res)=>{ 
+// app.post("/deletetasks", (req, res)=>{ 
 
-    let sqlQuery = "delete from taskbox where taskId="+req.body.UniqueKey; 
-    let post = {taskId : req.body.UniqueKey}
-    console.log(req.body.UniqueKey); 
-    connection.connect(); 
-    let query=connection.query(sqlQuery, post, (err, result)=>{ 
-        if(err) throw err
+//     let sqlQuery = "delete from taskbox where taskId="+req.body.UniqueKey; 
+//     let post = {taskId : req.body.UniqueKey}
+//     console.log(req.body.UniqueKey); 
+//     connection.connect(); 
+//     let query=connection.query(sqlQuery, post, (err, result)=>{ 
+//         if(err) throw err
  
-    })
+//     })
     
 
-    // connection.query(sqlQuery, function(err, rows, fields){ 
-    //     if (err) console.log(err);
-    //     res.json(rows); 
-    // })
-    setTimeout(() => {
-        res.redirect("/task/todo");
+//     // connection.query(sqlQuery, function(err, rows, fields){ 
+//     //     if (err) console.log(err);
+//     //     res.json(rows); 
+//     // })
+//     setTimeout(() => {
+//         res.redirect("/task/todo");
 
-    }, 3000);
+//     }, 3000);
     
     
-})
+// })
 
 
 
