@@ -35,6 +35,19 @@ app.get("/api/user_task_data", (req, res)=> {
 })
 
 
+app.get("/api/teamleader_data", (req, res)=> {
+    //Fethching the data from the database. 
+    //console.log("Fetching proejct called");
+    connection.connect(); 
+    connection.query("select teamleader.leaderId, users.firstName, users.surname, users.username, users.userRank\
+    from users inner join  teamleader on teamleader.userId = users.userId", function(err, rows, fields){ 
+        if (err) { 
+            console.log(err) ;
+        }
+        res.json(rows); 
+    })
+})
+
 
 // Edit task detail change and fetcher. 
 var editId = 0; 
@@ -97,6 +110,8 @@ app.get("/api/user_project_data", (req, res)=> {
     })
 })
 
+// Get data of all users 
+
 
 app.get("/api/get-users-data", (req, res)=> { 
     connection.connect(); 
@@ -155,6 +170,34 @@ app.post("/add-projects", (req, res)=>{ //DELETE
     res.redirect("/home");
 })
 
+
+app.post("/add-new-users", (req, res) => { 
+    let userData = req.body;
+    let userRank  = userData.userRank==="Team Leader" ? 1 : 0
+    let SQL = `insert into users values (null, "` + userData.fname +`","` + userData.sname+ `","` + userData.uname + `","` + userRank + `");`;
+    // if(userRank === 1){ 
+    //     SQL += `insert into teamleader values (null, (select userId from users where users.username="`+userData.uname+`"))` 
+    // }
+    connection.connect(); 
+    connection.query(SQL,
+     function(err, rows, fields){ 
+        if (err) { 
+            console.log(err) ;
+        }
+        if(userRank === 1) {
+            if(rows){ 
+                SQL = `insert into teamleader values (null, (select userId from users where users.username="`+userData.uname+`"))` 
+                connection.query(SQL,
+                    function(err, rows, fields){ 
+                    if (err) { 
+                        console.log(err) ;
+                    }
+                })
+            }
+        }
+
+    })
+})
 
 // app.post("/deletetasks", (req, res)=>{ 
 
@@ -248,7 +291,7 @@ app.post("/api/update-publish/:taskId/:typeHideShow", (req, res) => {
     let sqlQuery=""; 
     if(req.params.typeHideShow=="Hide"){ 
         sqlQuery = "update taskbox set published = 0 where taskId="+req.params.taskId; 
-    }else if(req.params.typeHideShow=="Show"){ 
+    }else if(req.params.typeHideShow=="Publish"){ 
         sqlQuery = "update taskbox set published = 1 where taskId="+req.params.taskId; 
     }
     let post = {id : req.body.uniquePId}
@@ -262,6 +305,9 @@ app.post("/api/update-publish/:taskId/:typeHideShow", (req, res) => {
     })
 
 }); 
+
+
+
 
 
 
