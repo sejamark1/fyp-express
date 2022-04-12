@@ -16,8 +16,6 @@ app.use(cors());
 
 
 
-// YOU NEED TO DO THE SQL GRAEME TABLE table 
-
 
 app.get("/api/user_task_data", (req, res)=> {
     //Fethching the data from the database. 
@@ -99,7 +97,6 @@ app.post("/update-task-details", (req, res) =>{
 
 
 app.get("/api/user_project_data", (req, res)=> {
-    //Fethching the data from the database. 
     connection.connect(); 
     connection.query("SELECT * FROM projects",
      function(err, rows, fields){ 
@@ -112,7 +109,6 @@ app.get("/api/user_project_data", (req, res)=> {
 
 // Get data of all users 
 
-
 app.get("/api/get-users-data", (req, res)=> { 
     connection.connect(); 
     connection.query("SELECT * FROM users",
@@ -124,7 +120,7 @@ app.get("/api/get-users-data", (req, res)=> {
     })
 })
 
-//let post = {taskId: null, projectId: "(select id from projects where projectName='"+userData.projectName+"')", taskDetail : userData.taskDetail, taskDue: userData.taskDue, taskPriority: 1, taskStatus: 0, allocatedTo:1, taskTags: userData.taskTags}; 
+
 
 
 app.post("/add-task", (req, res)=>{ //DELETE
@@ -175,9 +171,6 @@ app.post("/add-new-users", (req, res) => {
     let userData = req.body;
     let userRank  = userData.userRank==="Team Leader" ? 1 : 0
     let SQL = `insert into users values (null, "` + userData.fname +`","` + userData.sname+ `","` + userData.uname + `","` + userRank + `");`;
-    // if(userRank === 1){ 
-    //     SQL += `insert into teamleader values (null, (select userId from users where users.username="`+userData.uname+`"))` 
-    // }
     connection.connect(); 
     connection.query(SQL,
      function(err, rows, fields){ 
@@ -198,30 +191,6 @@ app.post("/add-new-users", (req, res) => {
 
     })
 })
-
-// app.post("/deletetasks", (req, res)=>{ 
-
-//     let sqlQuery = "delete from taskbox where taskId="+req.body.UniqueKey; 
-//     let post = {taskId : req.body.UniqueKey}
-//     console.log(req.body.UniqueKey); 
-//     connection.connect(); 
-//     let query=connection.query(sqlQuery, post, (err, result)=>{ 
-//         if(err) throw err
- 
-//     })
-    
-
-//     // connection.query(sqlQuery, function(err, rows, fields){ 
-//     //     if (err) console.log(err);
-//     //     res.json(rows); 
-//     // })
-//     setTimeout(() => {
-//         res.redirect("/task/todo");
-
-//     }, 3000);
-    
-    
-// })
 
 
 
@@ -310,29 +279,6 @@ app.post("/api/update-publish/:taskId/:typeHideShow", (req, res) => {
 
 
 
-
-//connection.end(); 
-
-
-
-
-
-
-// res.json({
-//     id: "1", 
-//     projectName:"Nodlehs",
-//     projectDetail:"We need a process that will track the inventory and status of components in the chassis.\
-//               It should accept IPC requests from the various cards, maintain an internal database of what's currently available,\
-//               respond to IPC queries from other components and have a CLI interface so that we can query its contents. We will be\
-//               adding capabilities above and beyond this in the future.",
-//     projectDue:"Tomorrow",
-//     projectPriority:"1",
-//     projectChekced:"false",
-//     projectLoggedInIcon:"./images/sheldon.jpg",
-//     projectLoggedInUsername:"sheldcooper93",
-//     ProjectTag:""  // Make this array
-    
-// }); 
 
 
 
